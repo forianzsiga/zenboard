@@ -94,9 +94,11 @@ export class ZenColorPicker {
         window.addEventListener('mousedown', (e) => {
             if (!this.isOpen())
                 return;
-            if (!this.el.contains(e.target)) {
-                this.close();
+            // Do not close if clicking inside picker or on the anchor button itself
+            if (this.el.contains(e.target) || e.target.closest('.fmt-color-wrap')) {
+                return;
             }
+            this.close();
         });
     }
 }

@@ -99,9 +99,25 @@ html, body {
   width: 0;
   height: 0;
   transform-origin: 0 0;
-  /* Hardware acceleration */
+  /* Hardware acceleration & subpixel crisp rendering on scale */
   will-change: transform;
   transform: translate3d(0px, 0px, 0px) scale(1);
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+
+.board-card {
+  position: absolute;
+  border-radius: 6px;
+  background: var(--card-bg-default);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  will-change: transform, width, height;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  overflow: visible;
+  touch-action: none;
+  /* Ensure SVG math fonts and vectors do not pixelate on zoom */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* ==========================================================================

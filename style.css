@@ -1,0 +1,793 @@
+/* ==========================================================================
+   ZEN Moodboard Design System - Blender-Inspired Coherent Zen Theme
+   ========================================================================== */
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Blender Dark theme (Default) */
+  --bg-app: #181818;
+  --bg-surface: #242424;
+  --bg-surface-elevated: #2d2d2d;
+  --bg-surface-glass: rgba(36, 36, 36, 0.85);
+  --border-subtle: #333333;
+  --border-hover: #4e4e4e;
+  --border-active: #4772b3; /* Blender selection blue */
+  --border-active-orange: #e87d1e; /* Blender active node orange */
+  --text-main: #d9d9d9;
+  --text-muted: #808080;
+  --accent: #4772b3;
+  --accent-blender: #e87d1e;
+  --accent-hover: #5687cf;
+  --accent-glow: rgba(71, 114, 179, 0.35);
+  --card-bg-default: #2b2b2b;
+  --card-header-bg: #383838;
+  
+  /* Blender exact node editor dot pattern colors */
+  --canvas-dot-color: rgba(255, 255, 255, 0.16);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.85);
+}
+
+html:not(.dark) {
+  /* Blender Light theme */
+  --bg-app: #d0d0d0;
+  --bg-surface: #e4e4e4;
+  --bg-surface-elevated: #ececec;
+  --bg-surface-glass: rgba(228, 228, 228, 0.9);
+  --border-subtle: #b8b8b8;
+  --border-hover: #9c9c9c;
+  --border-active: #2f6fd4;
+  --border-active-orange: #d66d15;
+  --text-main: #1e1e1e;
+  --text-muted: #666666;
+  --accent: #2f6fd4;
+  --accent-blender: #d66d15;
+  --accent-hover: #1e5ec2;
+  --accent-glow: rgba(47, 111, 212, 0.25);
+  --card-bg-default: #f2f2f2;
+  --card-header-bg: #e0e0e0;
+  --canvas-dot-color: rgba(0, 0, 0, 0.20);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-overlay: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+/* ==========================================================================
+   Infinite Viewport & GPU Accelerated Canvas with Blender Dots Pattern
+   ========================================================================== */
+
+.viewport {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  cursor: grab;
+  background-color: var(--bg-app);
+  background-image: radial-gradient(circle, var(--canvas-dot-color) 1.2px, transparent 1.3px);
+  background-size: 20px 20px;
+}
+
+.viewport.panning {
+  cursor: grabbing;
+}
+
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  /* Hardware acceleration */
+  will-change: transform;
+  transform: translate3d(0px, 0px, 0px) scale(1);
+}
+
+/* ==========================================================================
+   SVG Drawing & Vector Layer (Freehand & Smoothed Bezier Arrows)
+   ========================================================================== */
+
+.drawing-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 50;
+}
+
+/* Active in-flight stroke: 50% opacity, follows cursor per-pixel */
+.active-draw-path {
+  fill: none;
+  stroke: var(--accent-blender, #e87d1e);
+  stroke-width: 3.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.5; /* 50% opacity while following cursor */
+  pointer-events: none;
+}
+
+/* Final smoothed Bezier arrow stroke */
+.smoothed-arrow-path {
+  fill: none;
+  stroke: var(--accent-blender, #e87d1e);
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.95;
+  cursor: pointer;
+  pointer-events: stroke;
+  transition: stroke-width 0.15s ease, opacity 0.15s ease;
+}
+
+.smoothed-arrow-path:hover {
+  stroke-width: 4.5px;
+  opacity: 1;
+}
+
+.viewport.drawing-mode {
+  cursor: crosshair !important;
+}
+
+.zen-btn.active-tool {
+  background: var(--accent-blender, #e87d1e);
+  border-color: var(--accent-blender, #e87d1e);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   Floating Zen Chrome Tabs
+   ========================================================================== */
+
+.tab-bar {
+  position: fixed;
+  top: 14px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 100;
+  pointer-events: none; /* Let clicks pass through empty spaces */
+}
+
+.tab-list {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100% - 240px);
+  overflow-x: auto;
+  scrollbar-width: none;
+  pointer-events: auto;
+}
+.tab-list::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: var(--bg-surface-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.tab-item:hover {
+  color: var(--text-main);
+  border-color: var(--border-hover);
+  background: var(--bg-surface-elevated);
+}
+
+.tab-item.active {
+  color: var(--text-main);
+  background: var(--bg-surface);
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px var(--accent-glow);
+  font-weight: 500;
+}
+
+.tab-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+.tab-close-btn:hover {
+  color: #ff5c5c;
+  background: rgba(255, 92, 92, 0.15);
+}
+
+.tab-btn-add {
+  pointer-events: auto;
+  background: var(--bg-surface-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.tab-btn-add:hover {
+  color: var(--text-main);
+  border-color: var(--border-hover);
+  background: var(--bg-surface-elevated);
+}
+
+.tab-bar-spacer {
+  flex: 1;
+}
+
+.top-controls {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   Zen Buttons & Controls
+   ========================================================================== */
+
+.zen-btn {
+  background: var(--bg-surface-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.zen-btn:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-surface-elevated);
+}
+
+.zen-btn.primary-btn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+.zen-btn.primary-btn:hover {
+  background: var(--accent-hover);
+}
+
+.zen-btn.highlight-btn {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+}
+.zen-btn.highlight-btn:hover {
+  background: #059669;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-sun { display: none; }
+.icon-moon { display: inline-block; }
+html:not(.dark) .icon-sun { display: inline-block; }
+html:not(.dark) .icon-moon { display: none; }
+
+/* ==========================================================================
+   Moodboard Cards (Blender Node-Inspired Style with Header Pill & Crisp Border)
+   ========================================================================== */
+
+.board-card {
+  position: absolute;
+  border-radius: 6px;
+  background: var(--card-bg-default);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  will-change: transform, width, height;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  overflow: visible;
+  touch-action: none;
+}
+
+.board-card.selected {
+  border-color: var(--accent-blender); /* Blender active orange outline */
+  box-shadow: 0 0 0 1.5px var(--accent-blender), var(--shadow-card);
+}
+
+.card-header-bar {
+  height: 24px;
+  background: var(--card-header-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  user-select: none;
+  cursor: grab;
+}
+
+.card-header-bar:active {
+  cursor: grabbing;
+}
+
+.card-inner {
+  width: 100%;
+  height: calc(100% - 24px);
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Edit Pen Button appearing on hover in top right */
+.card-edit-pen {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--bg-surface-glass);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+  z-index: 10;
+}
+.board-card:hover .card-edit-pen {
+  opacity: 1;
+  pointer-events: auto;
+}
+.card-edit-pen:hover {
+  background: var(--bg-surface-elevated);
+  transform: scale(1.08);
+}
+
+/* Card Resize Handles */
+.card-resizer {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  bottom: -4px;
+  right: -4px;
+  cursor: nwse-resize;
+  z-index: 15;
+}
+.card-resizer::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  opacity: 0.6;
+}
+
+/* Text Card Content */
+.card-text-content {
+  padding: 14px 16px;
+  min-height: 48px;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+  color: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.card-text-content:empty::before {
+  content: "Type note or $x^2 + y^2 = r^2$...";
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* LaTeX formula presentation inside text */
+.katex-display {
+  margin: 0.5em 0 !important;
+}
+
+/* Media Card Content (Image & Video) */
+.card-media-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000000;
+}
+
+.card-media-wrapper img,
+.card-media-wrapper video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  display: block;
+}
+
+/* In-renderer cropping using CSS object-view-box or clip-path / transform */
+.card-media-cropped {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.card-media-cropped video,
+.card-media-cropped img {
+  position: absolute;
+  transform-origin: 0 0;
+  max-width: none;
+  max-height: none;
+}
+
+/* Video badge / indicator */
+.card-video-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Floating Action Bars (Text Formatting vs Card Quick Actions)
+   ========================================================================== */
+
+.actions-bar,
+.formatting-bar {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: var(--bg-surface-glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  z-index: 110;
+  transform: translate(-50%, -100%);
+  margin-top: -10px;
+  pointer-events: auto;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.actions-bar.hidden,
+.formatting-bar.hidden {
+  display: none !important;
+}
+
+.formatting-bar {
+  /* Text formatting is distinguished with a subtle accent border */
+  border-color: var(--accent);
+  box-shadow: 0 4px 14px rgba(71, 114, 179, 0.25), var(--shadow-card);
+}
+
+.fmt-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  padding: 4px 8px;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.fmt-btn:hover {
+  background: var(--bg-surface-elevated);
+}
+
+.fmt-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border-subtle);
+  margin: 0 2px;
+}
+
+.fmt-color-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.fmt-color-wrap:hover {
+  background: var(--bg-surface-elevated);
+}
+.fmt-color-wrap input[type="color"] {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+.fmt-color-icon {
+  font-weight: bold;
+  font-size: 13px;
+}
+.fmt-color-icon.bg-icon {
+  font-size: 12px;
+}
+
+/* ==========================================================================
+   Video Minimalist Editor Modal
+   ========================================================================== */
+
+.editor-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editor-modal.hidden {
+  display: none !important;
+}
+
+.editor-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.editor-content {
+  position: relative;
+  width: min(880px, 92vw);
+  max-height: 90vh;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  box-shadow: var(--shadow-overlay);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.editor-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.icon-btn-close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+}
+.icon-btn-close:hover {
+  color: var(--text-main);
+}
+
+.editor-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.editor-preview-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #000000;
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 480px;
+  min-height: 240px;
+  position: relative;
+}
+
+.editor-crop-box {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+#editor-video {
+  max-width: 100%;
+  max-height: 460px;
+  display: block;
+}
+
+.crop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 2px dashed var(--accent);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+  cursor: move;
+}
+
+.crop-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border: 2px solid var(--accent);
+  border-radius: 2px;
+}
+.crop-handle.nw { top: -6px; left: -6px; cursor: nwse-resize; }
+.crop-handle.ne { top: -6px; right: -6px; cursor: nesw-resize; }
+.crop-handle.sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+.crop-handle.se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+
+.editor-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editor-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.time-display {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.flex-spacer {
+  flex: 1;
+}
+
+.editor-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.range-slider {
+  position: relative;
+  height: 26px;
+  display: flex;
+  align-items: center;
+}
+
+.range-track {
+  position: absolute;
+  width: 100%;
+  height: 6px;
+  background: var(--bg-surface-elevated);
+  border-radius: 3px;
+}
+
+.range-highlight {
+  position: absolute;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+.range-slider input[type="range"] {
+  position: absolute;
+  width: 100%;
+  height: 6px;
+  background: transparent;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+.range-slider input[type="range"]::-webkit-slider-thumb {
+  pointer-events: auto;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--accent);
+  cursor: ew-resize;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+
+.trim-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}

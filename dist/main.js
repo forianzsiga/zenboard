@@ -30,10 +30,10 @@ export class ZenMoodboardApp {
         addTextBtn: document.getElementById('add-text-btn'),
         themeToggle: document.getElementById('theme-toggle'),
         cardActionsBar: document.getElementById('card-actions-bar'),
-        cardBgColor: document.getElementById('card-bg-color'),
+        cardBgBtn: document.getElementById('card-bg-btn'),
         cardDeleteBtn: document.getElementById('card-delete-btn'),
         formattingBar: document.getElementById('formatting-bar'),
-        fmtTextColor: document.getElementById('fmt-text-color'),
+        fmtTextColorBtn: document.getElementById('fmt-text-color-btn'),
         drawingSvg: document.getElementById('drawing-svg'),
         drawingsGroup: document.getElementById('drawings-group'),
         activeDrawPath: document.getElementById('active-draw-path')
@@ -51,10 +51,10 @@ export class ZenMoodboardApp {
         this.cardInteraction = new CardInteractionHandler({
             canvas: this.dom.canvas,
             cardActionsBar: this.dom.cardActionsBar,
-            cardBgColor: this.dom.cardBgColor,
+            cardBgBtn: this.dom.cardBgBtn,
             cardDeleteBtn: this.dom.cardDeleteBtn,
             formattingBar: this.dom.formattingBar,
-            fmtTextColor: this.dom.fmtTextColor
+            fmtTextColorBtn: this.dom.fmtTextColorBtn
         }, this.viewport, this.state, () => this.save());
         this.setupTheme();
         this.setupToolbarHandlers();
@@ -160,26 +160,6 @@ export class ZenMoodboardApp {
                 if (cmd)
                     document.execCommand(cmd, false, undefined);
             });
-        });
-        this.dom.fmtTextColor?.addEventListener('input', (e) => {
-            const card = this.getSelectedCard();
-            if (card) {
-                card.textColor = e.target.value;
-                const el = document.getElementById(`card-${card.id}`);
-                if (el)
-                    el.style.color = card.textColor;
-                this.save();
-            }
-        });
-        this.dom.cardBgColor?.addEventListener('input', (e) => {
-            const card = this.getSelectedCard();
-            if (card) {
-                card.bgColor = e.target.value;
-                const el = document.getElementById(`card-${card.id}`);
-                if (el)
-                    el.style.backgroundColor = card.bgColor;
-                this.save();
-            }
         });
         this.dom.cardDeleteBtn?.addEventListener('click', () => {
             const tab = this.getActiveTab();

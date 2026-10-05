@@ -568,25 +568,93 @@ html:not(.dark) .icon-moon { display: none; }
   justify-content: center;
   position: relative;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 4px 6px;
   border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  transition: background 0.12s ease;
 }
 .fmt-color-wrap:hover {
   background: var(--bg-surface-elevated);
 }
-.fmt-color-wrap input[type="color"] {
-  position: absolute;
-  opacity: 0;
-  width: 100%;
-  height: 100%;
+
+/* ==========================================================================
+   Blender & Zen Theme-Compliant Color Picker Popover
+   ========================================================================== */
+
+.zen-color-picker {
+  position: fixed;
+  z-index: 150;
+  width: 196px;
+  padding: 10px;
+  background: var(--bg-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: var(--shadow-overlay);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  user-select: none;
+}
+
+.zen-color-picker.hidden {
+  display: none !important;
+}
+
+.zen-picker-presets {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+}
+
+.zen-picker-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s ease, border-color 0.1s ease;
 }
-.fmt-color-icon {
-  font-weight: bold;
-  font-size: 13px;
+
+.zen-picker-swatch:hover {
+  transform: scale(1.15);
+  border-color: #ffffff;
+  z-index: 2;
 }
-.fmt-color-icon.bg-icon {
-  font-size: 12px;
+
+.zen-picker-custom-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.zen-picker-preview {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.zen-picker-input {
+  flex: 1;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 6px;
+  outline: none;
+}
+
+.zen-picker-input:focus {
+  border-color: var(--accent);
 }
 
 /* ==========================================================================

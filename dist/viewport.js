@@ -20,13 +20,22 @@ export class ViewportManager {
         this.bindEvents();
     }
     bindEvents() {
+        // Window-level middle-mouse listener ensures middle-drag pans everywhere (even when mouse starts on top of a card)
+        window.addEventListener('mousedown', (e) => {
+            if (e.button === 1) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                this.isPanning = true;
+                this.startX = e.clientX - this.panX;
+                this.startY = e.clientY - this.panY;
+                this.viewportEl.classList.add('panning');
+            }
+        }, true); // Capture phase ensures it intercepts before card handlers
         this.viewportEl.addEventListener('mousedown', (e) => {
-            // Background pan check
+            // Background pan with left-click directly on canvas background
             const target = e.target;
-            if (target === this.viewportEl ||
-                target === this.canvasEl ||
-                target.id === 'drawing-svg' ||
-                e.button === 1) {
+            if ((target === this.viewportEl || target === this.canvasEl || target.id === 'drawing-svg') &&
+                e.button === 0) {
                 this.isPanning = true;
                 this.startX = e.clientX - this.panX;
                 this.startY = e.clientY - this.panY;

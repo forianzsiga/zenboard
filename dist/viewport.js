@@ -19,6 +19,9 @@ export class ViewportManager {
         this.activePath = activePath;
         this.bindEvents();
     }
+    isWheelZooming = false;
+    wheelEndTimeout = null;
+    onZoomEnd = null;
     bindEvents() {
         // Window-level middle-mouse listener ensures middle-drag pans everywhere (even when mouse starts on top of a card)
         window.addEventListener('mousedown', (e) => {
@@ -71,6 +74,12 @@ export class ViewportManager {
             this.zoom = newZoom;
             this.updateTransform();
             this.onTransformChange?.();
+            // Debounce zoom settlement to trigger full node layout & vector re-evaluation
+            if (this.wheelEndTimeout)
+                clearTimeout(this.wheelEndTimeout);
+            this.wheelEndTimeout = setTimeout(() => {
+                this.onZoomEnd?.();
+            }, 100);
         }, { passive: false });
         this.viewportEl.addEventListener('dblclick', (e) => {
             const target = e.target;
@@ -98,6 +107,7 @@ export class ViewportManager {
         this.updateTransform();
     }
     onChange(cb) { this.onTransformChange = cb; }
+    onZoomSettled(cb) { this.onZoomEnd = cb; }
     onDblClick(cb) { this.onDblClickBackground = cb; }
     onDeselectAction(cb) { this.onDeselect = cb; }
 }

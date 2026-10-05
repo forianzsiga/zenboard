@@ -1,4 +1,5 @@
 import { worldToScreen } from './geometry.js';
+import { zenColorPicker } from './color-picker.js';
 export class CardInteractionHandler {
     dom;
     viewport;
@@ -9,6 +10,44 @@ export class CardInteractionHandler {
         this.viewport = viewport;
         this.state = state;
         this.onSave = onSave;
+        this.bindColorPickers();
+    }
+    bindColorPickers() {
+        this.dom.cardBgBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const card = this.getSelectedCard();
+            if (!card)
+                return;
+            zenColorPicker.open({
+                anchorEl: this.dom.cardBgBtn,
+                initialColor: card.bgColor || '#242424',
+                onChange: (color) => {
+                    card.bgColor = color;
+                    const el = document.getElementById(`card-${card.id}`);
+                    if (el)
+                        el.style.backgroundColor = color;
+                    this.onSave();
+                }
+            });
+        });
+        this.dom.fmtTextColorBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // maintain contenteditable focus
+            e.stopPropagation();
+            const card = this.getSelectedCard();
+            if (!card)
+                return;
+            zenColorPicker.open({
+                anchorEl: this.dom.fmtTextColorBtn,
+                initialColor: card.textColor || '#ffffff',
+                onChange: (color) => {
+                    card.textColor = color;
+                    const el = document.getElementById(`card-${card.id}`);
+                    if (el)
+                        el.style.color = color;
+                    this.onSave();
+                }
+            });
+        });
     }
     setupDragging(el, card) {
         let isDragging = false;
@@ -119,23 +158,21 @@ export class CardInteractionHandler {
         this.hideFormattingBar();
         this.hideCardActions();
     }
-    showFormattingBar(card) {
+    showFormattingBar(_card) {
         this.dom.formattingBar.classList.remove('hidden');
-        if (card.textColor && this.dom.fmtTextColor)
-            this.dom.fmtTextColor.value = card.textColor;
         this.updateBarPosition(this.dom.formattingBar);
     }
     hideFormattingBar() {
         this.dom.formattingBar.classList.add('hidden');
+        zenColorPicker.close();
     }
-    showCardActions(card) {
+    showCardActions(_card) {
         this.dom.cardActionsBar.classList.remove('hidden');
-        if (card.bgColor && this.dom.cardBgColor)
-            this.dom.cardBgColor.value = card.bgColor;
         this.updateBarPosition(this.dom.cardActionsBar);
     }
     hideCardActions() {
         this.dom.cardActionsBar.classList.add('hidden');
+        zenColorPicker.close();
     }
     updateBarPositions() {
         if (!this.dom.formattingBar.classList.contains('hidden'))

@@ -90,6 +90,24 @@ export class ZenMoodboardApp {
                 this.save();
             }
         });
+        // Re-evaluate and re-render nodes crisp elements when zoom settles
+        this.viewport.onZoomSettled(() => {
+            this.cardInteraction.updateBarPositions();
+            // Re-evaluate in-renderer cropped media elements at new resolution
+            const tab = this.getActiveTab();
+            if (tab) {
+                tab.cards.forEach(card => {
+                    if (card.crop) {
+                        const el = document.getElementById(`card-${card.id}`);
+                        const media = el?.querySelector('.card-media-cropped img, .card-media-cropped video');
+                        if (media) {
+                            // Trigger renderer re-flow to ensure maximum sharpness
+                            media.style.transform = media.style.transform;
+                        }
+                    }
+                });
+            }
+        });
         this.viewport.onDblClick((pt) => {
             this.addNoteCard(pt.x, pt.y);
         });

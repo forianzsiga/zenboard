@@ -17,6 +17,9 @@ export class CardInteractionHandler {
         let initX = 0;
         let initY = 0;
         el.addEventListener('mousedown', (e) => {
+            // Middle-click (e.button === 1) or right-click is strictly reserved for canvas panning / context
+            if (e.button !== 0)
+                return;
             const target = e.target;
             if (target.closest('.card-edit-pen') || target.closest('.card-resizer'))
                 return;
@@ -29,6 +32,13 @@ export class CardInteractionHandler {
             initY = card.y;
             this.selectCard(card.id);
             e.stopPropagation();
+        });
+        // Also prevent click / select event on middle-click
+        el.addEventListener('click', (e) => {
+            if (e.button !== 0) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
         });
         window.addEventListener('mousemove', (e) => {
             if (!isDragging)
